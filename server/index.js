@@ -1,8 +1,8 @@
 import express from 'express';
-import { createServer } from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { SocketAddress } from 'net';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,9 +29,32 @@ const io = new Server(expressServer, {
 io.on('connection', (socket) => {
   console.log(`User ${socket.id} connected.`);
 
+  // Upon connection - only to user
+  socket.emit('message', 'Welcome to Chat App!');
+
+  // Upon connection - to all others
+  socket.broadcast.emit(
+    'message',
+    `User ${socket.id.substring(0, 5)} connected.`
+  );
+
+  // Listening for a message event
   socket.on('message', (data) => {
     console.log(data);
 
     io.emit('message', `${socket.id.substring(0, 5)}: ${data}`);
+  });
+
+  // When user disconnects - to all others
+  socket.on('disconnect', () => {
+    socket.broadcast.emit(
+      'message',
+      `User ${socket.id.substring(0, 5)} Disconnected.`
+    );
+  });
+
+  // Listen for activity
+  socket.on('activity', (name) => {
+    socket.broadcast.emit('activity', name);
   });
 });
