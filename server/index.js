@@ -35,7 +35,7 @@ const io = new Server(expressServer, {
 });
 
 io.on('connection', (socket) => {
-  console.log(`User ${socket.id} connected.`);
+  console.log(`User ${socket.id} connected`);
 
   // Upon connection - only to user
   socket.emit('message', buildMsg(ADMIN, 'Welcome to Chat App!'));
@@ -51,19 +51,20 @@ io.on('connection', (socket) => {
         buildMsg(ADMIN, `${name} has left the room`)
       );
     }
+
     const user = activateUser(socket.id, name, room);
 
-    // Cannot update previous room users list until after the state update in active user
+    // Cannot update previous room users list until after the state update in activate user
     if (prevRoom) {
-      io.to(prevRoom).emit('usersList', {
+      io.to(prevRoom).emit('userList', {
         users: getUsersInRoom(prevRoom),
       });
     }
 
-    // Join room
+    // join room
     socket.join(user.room);
 
-    // To who joined
+    // To user who joined
     socket.emit(
       'message',
       buildMsg(ADMIN, `You have joined the ${user.room} chat room`)
@@ -74,7 +75,7 @@ io.on('connection', (socket) => {
       .to(user.room)
       .emit('message', buildMsg(ADMIN, `${user.name} has joined the room`));
 
-    // update user list for room
+    // Update user list for room
     io.to(user.room).emit('userList', {
       users: getUsersInRoom(user.room),
     });
@@ -105,13 +106,12 @@ io.on('connection', (socket) => {
       });
     }
 
-    console.log(`User ${socket.id} disconnected.`);
+    console.log(`User ${socket.id} disconnected`);
   });
 
   // Listening for a message event
   socket.on('message', ({ name, text }) => {
     const room = getUser(socket.id)?.room;
-
     if (room) {
       io.to(room).emit('message', buildMsg(name, text));
     }
@@ -120,7 +120,6 @@ io.on('connection', (socket) => {
   // Listen for activity
   socket.on('activity', (name) => {
     const room = getUser(socket.id)?.room;
-
     if (room) {
       socket.broadcast.to(room).emit('activity', name);
     }
@@ -139,7 +138,7 @@ function buildMsg(name, text) {
   };
 }
 
-// User function
+// User functions
 function activateUser(id, name, room) {
   const user = { id, name, room };
   UsersState.setUsers([
@@ -150,7 +149,7 @@ function activateUser(id, name, room) {
 }
 
 function userLeavesApp(id) {
-  UsersState.setUsers([UsersState.users.filter((user) => user.id !== id)]);
+  UsersState.setUsers(UsersState.users.filter((user) => user.id !== id));
 }
 
 function getUser(id) {
@@ -162,5 +161,5 @@ function getUsersInRoom(room) {
 }
 
 function getAllActiveRooms() {
-  return Array.form(new Set(UsersState.users.map((user) => user.room)));
+  return Array.from(new Set(UsersState.users.map((user) => user.room)));
 }
